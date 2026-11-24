@@ -1,6 +1,31 @@
-@OrderService.Api_HostAddress = http://localhost:5232
+@host = http://localhost:8080
+@customerId = aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa
+@mouseId = 22222222-2222-2222-2222-222222222222
 
-GET {{OrderService.Api_HostAddress}}/weatherforecast/
-Accept: application/json
+### Token
+# @name token
+POST {{host}}/auth/token
+Content-Type: application/json
 
-###
+{
+  "clientId": "dev-client",
+  "clientSecret": "dev-secret-change-me"
+}
+
+### Criar pedido
+POST {{host}}/orders
+Authorization: Bearer {{token.response.body.accessToken}}
+Content-Type: application/json
+Idempotency-Key: demo-pedido-1
+
+{
+  "customerId": "{{customerId}}",
+  "currency": "BRL",
+  "items": [
+    { "productId": "{{mouseId}}", "quantity": 2 }
+  ]
+}
+
+### Listar pedidos
+GET {{host}}/orders?customerId={{customerId}}&status=Placed&page=1&pageSize=20
+Authorization: Bearer {{token.response.body.accessToken}}
