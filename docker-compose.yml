@@ -1,0 +1,48 @@
+name: order-service
+
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: orders
+      POSTGRES_PASSWORD: orders
+      POSTGRES_DB: orders
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U orders -d orders"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    # Docker publica a porta do Postgres no host e, a partir do Engine 28,
+    # bloqueia o acesso direto de outro container ao IP interno nessa porta.
+    # O gateway do host mantém o mesmo compose utilizável da rede interna e do host.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      # Credenciais e chave JWT abaixo são exclusivas de desenvolvimento.
+      ConnectionStrings__Orders: Host=host.docker.internal;Port=5432;Database=orders;Username=orders;Password=orders
+      Jwt__Issuer: order-service
+      Jwt__Audience: order-service
+      Jwt__SigningKey: dev-only-signing-key-change-me-32chars
+      Jwt__ExpirationMinutes: "60"
+      Auth__ClientId: dev-client
+      Auth__ClientSecret: dev-secret-change-me
+      Concurrency__MaxAttempts: "3"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:

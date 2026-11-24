@@ -1,0 +1,9 @@
+**/.git
+**/.vs
+**/.idea
+**/.cursor
+**/bin
+**/obj
+**/TestResults
+**/*.user
+**/agent-tools
